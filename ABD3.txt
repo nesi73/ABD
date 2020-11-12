@@ -1,0 +1,123 @@
+set serveroutput on
+set autocommit off
+
+create sequence sec_T1
+START WITH 0
+INCREMENT BY 1
+MINVALUE 0
+MAXVALUE 1
+CYCLE
+NOCACHE
+
+========== Para no dar permisos a todo el mundo se crean los sinónimos
+(SOLO desde el DBA, no desde el ADMINUSER)
+------- desde <ELUSUARIO>
+CREATE OR REPLACE PROCEDURE dormir (lapsus IN number) -- lapsus es en segundos
+AS
+BEGIN
+DBMS_LOCK.SLEEP (lapsus); -- es un subprogrma del paquete DBMS_LOCK
+--- da error si no tiene permiso, desde DBA:
+     grant execute on sys.dbms_lock to <ELUSUARIO>; --Nuestro usuario
+	
+END;
+
+CREATE OR REPLACE PROCEDURE trabajando_T1 (X IN NUMBER) AS
+DECLARE
+	numeroT VARCHAR(50) /*que-num-trans.sql*/
+	ACTUAL NUMBER;
+    ANTERIOR NUMBER;
+BEGIN
+
+	LOOP
+
+		SELECT  sec_T1.NEXTVAL into ESTADO_ACTUAL FROM dual ; 
+        
+        IF  ACTUAL = ANTERIOR THEN EXIT;
+        ELSE
+   
+            ANTERIOR := ACTUAL;
+            DORMIR(5);
+   
+        END IF;
+		
+	END LOOP;
+	
+SELECT dbms_transaction.local_transaction_id INTO numeroT FROM dual;
+DBMS_OUTPUT.PUT_LINE('se ha dormido la trans->  ' || numeroT);
+END;	
+	
+CREATE OR REPLACE PROCEDURE probarMiT1 AS
+BEGIN
+	INSERT INTO Compras VALUES ('00000005', '50000401',7, 0001,'tienda1',50);
+	INSERT INTO Compras VALUES ('00000005', '50000031',8, 0010,'tienda1',5);
+	INSERT INTO Compras VALUES ('00000005', '50000401',9, 0011,'tienda1',500);
+
+	trabajando_T1(5);
+
+	INSERT INTO Compras VALUES ('00000005', '50000401',51, 0100,'tienda1',50);
+	INSERT INTO Compras VALUES ('00000005', '50000031',52, 0101,'tienda1',5);
+	INSERT INTO Compras VALUES ('00000005', '50000401',53, 0110,'tienda1',500);
+	
+	trabajando_T1(5);
+END;
+
+-----PARTE 2
+create sequence sec_T2
+START WITH 0
+INCREMENT BY 1
+MINVALUE 0
+MAXVALUE 1
+CYCLE
+NOCACHE
+
+========== Para no dar permisos a todo el mundo se crean los sinónimos
+(SOLO desde el DBA, no desde el ADMINUSER)
+------- desde <ELUSUARIO>
+CREATE OR REPLACE PROCEDURE dormir (lapsus IN number) -- lapsus es en segundos
+AS
+BEGIN
+DBMS_LOCK.SLEEP (lapsus); -- es un subprogrma del paquete DBMS_LOCK
+--- da error si no tiene permiso, desde DBA:
+     grant execute on sys.dbms_lock to <ELUSUARIO>; --Nuestro usuario
+		
+END;
+
+CREATE OR REPLACE PROCEDURE trabajando_T2 (X IN NUMBER) AS
+DECLARE
+	numeroT VARCHAR(50) /*que-num-trans.sql*/
+	ACTUAL NUMBER;
+    ANTERIOR NUMBER;
+BEGIN
+
+	LOOP
+
+		SELECT  sec_T2.NEXTVAL into ESTADO_ACTUAL FROM dual ; 
+        
+        IF  ACTUAL = ANTERIOR THEN EXIT;
+        ELSE
+   
+            ANTERIOR := ACTUAL;
+            DORMIR(5);
+   
+        END IF;
+		
+	END LOOP;
+	
+SELECT dbms_transaction.local_transaction_id INTO numeroT FROM dual;
+DBMS_OUTPUT.PUT_LINE('se ha dormido la trans->  ' || numeroT);
+END;	
+	
+CREATE OR REPLACE PROCEDURE probarMiT2 AS
+BEGIN
+	INSERT INTO Compras VALUES ('00000005', '50000401',7, 0001,'tienda1',50);
+	INSERT INTO Compras VALUES ('00000005', '50000031',8, 0010,'tienda1',5);
+	INSERT INTO Compras VALUES ('00000005', '50000401',9, 0011,'tienda1',500);
+
+	trabajando_T2(5);
+
+	INSERT INTO Compras VALUES ('00000005', '50000401',51, 0100,'tienda1',50);
+	INSERT INTO Compras VALUES ('00000005', '50000031',52, 0101,'tienda1',5);
+	INSERT INTO Compras VALUES ('00000005', '50000401',53, 0110,'tienda1',500);
+	
+	trabajando_T2(5);
+END;
